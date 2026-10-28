@@ -29,10 +29,12 @@ export function MusicToggle() {
     <>
       <audio
         ref={audioRef}
-        src={weddingData.musicUrl}
         loop
         preload="auto"
-      />
+      >
+        <source src="/music.mpeg" type="audio/mpeg" />
+        <source src="/music.mp3" type="audio/mp3" />
+      </audio>
       <button
         onClick={() => setIsPlaying(!isPlaying)}
         className="fixed top-6 left-6 z-50 p-3 rounded-full bg-black/20 backdrop-blur-md border border-white/20 text-white flex items-center gap-2 group transition-all"

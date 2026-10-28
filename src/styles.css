@@ -419,3 +419,72 @@
     filter: none !important;
   }
 }
+
+/* ── Birthday Party & Vintage Theme Utilities ────────────────────────────── */
+
+.vintage-wood-sunburst {
+  background-color: #2b1309;
+  background-image: 
+    radial-gradient(ellipse at 50% 45%, rgba(160, 82, 38, 0.5) 0%, rgba(20, 8, 3, 0.95) 80%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(68, 32, 16, 0.85) 0deg 7.5deg, rgba(30, 12, 5, 0.95) 7.5deg 15deg);
+}
+
+.vintage-stage-sunburst {
+  background-color: #240f06;
+  background-image: 
+    radial-gradient(circle at 50% 25%, rgba(230, 150, 70, 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 80%, rgba(120, 55, 20, 0.35) 0%, rgba(15, 6, 2, 0.98) 75%),
+    repeating-conic-gradient(from 0deg at 50% 35%, rgba(65, 28, 12, 0.8) 0deg 7.5deg, rgba(22, 9, 3, 0.95) 7.5deg 15deg);
+}
+
+.gold-badge-ticket {
+  background: linear-gradient(145deg, #fce09b 0%, #d4a33c 35%, #fef3c7 55%, #a87922 100%);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(212, 163, 60, 0.35),
+    inset 0 2px 4px rgba(255, 255, 255, 0.7),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fff7d6 0%, #e6be60 40%, #fff2be 65%, #c5973c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border-lux {
+  border: 2px solid rgba(212, 163, 60, 0.7);
+  box-shadow: 0 0 20px rgba(212, 163, 60, 0.25);
+}
+
+@keyframes marquee-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(255, 235, 150, 0.95)) drop-shadow(0 0 16px rgba(212, 163, 60, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(255, 245, 180, 1)) drop-shadow(0 0 28px rgba(245, 190, 70, 0.9));
+  }
+}
+
+.animate-marquee-glow {
+  animation: marquee-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes champagne-bubble {
+  0% {
+    transform: translateY(10px) scale(0.6);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-50px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.bubble-particle {
+  animation: champagne-bubble 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+

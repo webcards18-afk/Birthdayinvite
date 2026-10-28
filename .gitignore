@@ -1,3 +1,13 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+*.local
+
+# Local SQLite / JSON database files
+data/
+*.db
+
 # Logs
 logs
 *.log
