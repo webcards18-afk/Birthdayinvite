@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
-import { MusicToggle } from "@/components/MusicToggle";
+import { useState, useEffect } from "react";
 import { SectionOneIntro } from "@/components/sections/SectionOneIntro";
 import { SectionAgePoster } from "@/components/birthday/SectionAgePoster";
 import { SectionMainInvitation } from "@/components/birthday/SectionMainInvitation";
@@ -17,8 +16,8 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [hasOpenedIntro, setHasOpenedIntro] = useState(false);
+  const [isIntroDismissed, setIsIntroDismissed] = useState(false);
   const [hasScratched, setHasScratched] = useState(false);
-  const isTransitioningRef = useRef(false);
 
   // On page load or refresh, always reset scroll to the very top (0, 0)
   useEffect(() => {
@@ -48,27 +47,12 @@ function Index() {
     };
   }, [hasOpenedIntro, hasScratched]);
 
-  // When Video 1 ends: transition smoothly to Section 2 (#poster)
+  // When Video 1 ends: transition smoothly to Section 2 and completely dismiss Video 1
   const handleVideoOneFinish = () => {
-    isTransitioningRef.current = true;
-    document.body.style.overflow = "";
-    document.documentElement.style.overflow = "";
-
     setTimeout(() => {
-      const posterSec = document.getElementById("poster");
-      if (posterSec) {
-        posterSec.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
-      // After arriving at poster, re-lock scroll until scratch is completed
-      setTimeout(() => {
-        isTransitioningRef.current = false;
-        if (!hasScratched) {
-          document.body.style.overflow = "hidden";
-          document.documentElement.style.overflow = "hidden";
-        }
-      }, 1000);
-    }, 400);
+      setIsIntroDismissed(true);
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }, 600);
   };
 
   const handleCardScratched = () => {
@@ -79,15 +63,15 @@ function Index() {
 
   return (
     <div className="relative w-full bg-[#120702] font-body text-[#f5ebd7] overflow-x-hidden selection:bg-[#d4a33c]/30 selection:text-white">
-      {/* Audio Control */}
-      <MusicToggle />
-
       <main className="w-full flex flex-col">
-        {/* Intro Cinematic Video 1 with "Tap to Open Invitation" */}
-        <SectionOneIntro
-          onOpen={() => setHasOpenedIntro(true)}
-          onFinish={handleVideoOneFinish}
-        />
+        {/* Intro Cinematic Video 1 with "Tap to Open Invitation" — disappears after playing */}
+        {!isIntroDismissed && (
+          <SectionOneIntro
+            onOpen={() => setHasOpenedIntro(true)}
+            onFinish={handleVideoOneFinish}
+            isDismissed={isIntroDismissed}
+          />
+        )}
 
         {/* Section 1: Birthday Age Poster with Golden Scratch Card */}
         <SectionAgePoster onScratched={handleCardScratched} />

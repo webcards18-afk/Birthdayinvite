@@ -6,9 +6,10 @@ let globalAudio: HTMLAudioElement | null = null;
 interface SectionOneIntroProps {
   onOpen?: () => void;
   onFinish?: () => void;
+  isDismissed?: boolean;
 }
 
-export function SectionOneIntro({ onOpen, onFinish }: SectionOneIntroProps) {
+export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: SectionOneIntroProps) {
   const [hasStarted, setHasStarted] = useState(false);
   const [isVideoFinished, setIsVideoFinished] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -18,7 +19,7 @@ export function SectionOneIntro({ onOpen, onFinish }: SectionOneIntroProps) {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, []);
 
-  if (!clips.one) return null;
+  if (!clips.one || isDismissed) return null;
 
   const handleOpenInvitation = () => {
     setHasStarted(true);
@@ -57,7 +58,9 @@ export function SectionOneIntro({ onOpen, onFinish }: SectionOneIntroProps) {
   return (
     <section
       id="home"
-      className="relative w-full h-[100dvh] min-h-[100dvh] bg-[#120702] flex items-center justify-center select-none overflow-hidden"
+      className={`relative w-full h-[100dvh] min-h-[100dvh] bg-[#120702] flex items-center justify-center select-none overflow-hidden transition-all duration-700 ${
+        isVideoFinished ? "opacity-0 pointer-events-none" : "opacity-100"
+      }`}
     >
       {/* Edge-to-edge mobile container: fills 100% of mobile screen without any letterbox gaps */}
       <div className="relative w-full h-full max-w-[480px] sm:max-w-[540px] flex items-center justify-center overflow-hidden">
@@ -68,14 +71,12 @@ export function SectionOneIntro({ onOpen, onFinish }: SectionOneIntroProps) {
           muted
           playsInline
           onEnded={handleVideoEnded}
-          className={`w-full h-full object-cover block transition-all duration-1000 ${
-            isVideoFinished ? "filter blur-md scale-105 opacity-60" : "filter-none scale-100 opacity-100"
-          }`}
+          className="w-full h-full object-cover block"
         />
 
         <div
           className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/75 pointer-events-none transition-opacity duration-1000 ${
-            hasStarted && !isVideoFinished ? "opacity-0" : "opacity-100"
+            hasStarted ? "opacity-0" : "opacity-100"
           }`}
         />
 
