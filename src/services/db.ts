@@ -21,32 +21,41 @@ export interface RSVPStats {
   totalConfirmedAttendees: number;
 }
 
-// ── Supabase Client Initialization (Sanitized URL & Low-Egress Config) ─────
-let rawUrl = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"] || "";
-if (rawUrl.endsWith("/rest/v1/") || rawUrl.endsWith("/rest/v1")) {
-  rawUrl = rawUrl.replace(/\/rest\/v1\/?$/, "");
-}
-rawUrl = rawUrl.replace(/\/+$/, "");
-const supabaseUrl = rawUrl;
+// ── Fallback Supabase Configuration for Serverless / Cloudflare ─────────────
+const DEFAULT_SUPABASE_URL = "https://hygzzcwussugextmmetw.supabase.co";
+const DEFAULT_SERVICE_ROLE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5Z3p6Y3d1c3N1Z2V4dG1tZXR3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MzIwNDk5NSwiZXhwIjoyMTA4NzgwOTk1fQ.p7hkA2hy_7m3rz8iMOeu9PCOKFZIboQvE-3OiYjgV7Q";
+const DEFAULT_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5Z3p6Y3d1c3N1Z2V4dG1tZXR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDQ5OTUsImV4cCI6MjEwODc4MDk5NX0.AbNoQYeaK0YXmhE22Vw3cWUi4__8QeqcEafkeFKvX58";
 
-const supabaseKey =
-  process.env["SUPABASE_SERVICE_ROLE_KEY"] ||
-  process.env["SUPABASE_ANON_KEY"] ||
-  process.env["VITE_SUPABASE_ANON_KEY"] ||
-  "";
+export function getDbClient(): SupabaseClient | null {
+  let rawUrl =
+    process.env["SUPABASE_URL"] ||
+    process.env["VITE_SUPABASE_URL"] ||
+    DEFAULT_SUPABASE_URL;
 
-let supabase: SupabaseClient | null = null;
-if (supabaseUrl && supabaseKey) {
+  if (rawUrl.endsWith("/rest/v1/") || rawUrl.endsWith("/rest/v1")) {
+    rawUrl = rawUrl.replace(/\/rest\/v1\/?$/, "");
+  }
+  rawUrl = rawUrl.replace(/\/+$/, "");
+
+  const key =
+    process.env["SUPABASE_SERVICE_ROLE_KEY"] ||
+    process.env["SUPABASE_ANON_KEY"] ||
+    process.env["VITE_SUPABASE_ANON_KEY"] ||
+    DEFAULT_SERVICE_ROLE_KEY ||
+    DEFAULT_ANON_KEY;
+
+  if (!rawUrl || !key) return null;
+
   try {
-    supabase = createClient(supabaseUrl, supabaseKey, {
+    return createClient(rawUrl, key, {
       auth: { persistSession: false },
     });
-    console.log("Connected to Supabase PostgreSQL database at:", supabaseUrl);
   } catch (err) {
-    console.warn("Could not initialize Supabase client, falling back to local storage:", err);
+    console.warn("Could not create Supabase db client:", err);
+    return null;
   }
-} else {
-  console.log("Supabase credentials not configured in .env; using persistent local storage fallback.");
 }
 
 // ── Low-Egress In-Memory Cache (Protects Free Tier Egress) ─────────────────
@@ -57,37 +66,55 @@ function invalidateCache() {
   rsvpCache = null;
 }
 
-// ── Local Storage Fallback ──────────────────────────────────────────────────
+// ── Local In-Memory & File Storage Fallback ──────────────────────────────────
+let inMemoryRSVPs: RSVPRecord[] = [];
+
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const DB_FILE = path.join(DATA_DIR, "rsvps.json");
 
 function ensureDbFile(): void {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2), "utf-8");
+  try {
+    if (typeof fs !== "undefined" && typeof fs.existsSync === "function") {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      if (!fs.existsSync(DB_FILE)) {
+        fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2), "utf-8");
+      }
+    }
+  } catch {
+    // Cloudflare Workers has no writable filesystem
   }
 }
 
 function readLocalRecords(): RSVPRecord[] {
   try {
-    ensureDbFile();
-    const raw = fs.readFileSync(DB_FILE, "utf-8");
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed;
-    return [];
+    if (typeof fs !== "undefined" && typeof fs.existsSync === "function" && typeof fs.readFileSync === "function") {
+      ensureDbFile();
+      if (fs.existsSync(DB_FILE)) {
+        const raw = fs.readFileSync(DB_FILE, "utf-8");
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    }
   } catch (err) {
-    console.error("Failed to read local RSVP records:", err);
-    return [];
+    console.warn("Local filesystem read error, using in-memory store:", err);
   }
+  return inMemoryRSVPs;
 }
 
 function writeLocalRecords(records: RSVPRecord[]): void {
-  ensureDbFile();
-  const tmpFile = `${DB_FILE}.${crypto.randomBytes(6).toString("hex")}.tmp`;
-  fs.writeFileSync(tmpFile, JSON.stringify(records, null, 2), "utf-8");
-  fs.renameSync(tmpFile, DB_FILE);
+  inMemoryRSVPs = records;
+  try {
+    if (typeof fs !== "undefined" && typeof fs.existsSync === "function" && typeof fs.writeFileSync === "function") {
+      ensureDbFile();
+      const tmpFile = `${DB_FILE}.${crypto.randomBytes(6).toString("hex")}.tmp`;
+      fs.writeFileSync(tmpFile, JSON.stringify(records, null, 2), "utf-8");
+      fs.renameSync(tmpFile, DB_FILE);
+    }
+  } catch (err) {
+    console.warn("Local filesystem write error, stored in memory:", err);
+  }
 }
 
 // ── Database Methods ────────────────────────────────────────────────────────
@@ -98,6 +125,7 @@ export async function getAllRSVPs(): Promise<RSVPRecord[]> {
     return rsvpCache.data;
   }
 
+  const supabase = getDbClient();
   if (supabase) {
     try {
       // Egress optimization: select only required columns
@@ -137,6 +165,7 @@ export async function getAllRSVPs(): Promise<RSVPRecord[]> {
 }
 
 export async function getRSVPById(id: string): Promise<RSVPRecord | null> {
+  const supabase = getDbClient();
   if (supabase) {
     try {
       const { data, error } = await supabase
@@ -176,6 +205,7 @@ export async function createRSVP(data: {
 }): Promise<RSVPRecord> {
   const trimmedName = data.guestName.trim();
   const accompanying = Math.max(0, Math.floor(Number(data.accompanyingGuests) || 0));
+  const supabase = getDbClient();
 
   if (supabase) {
     try {
@@ -298,6 +328,7 @@ export async function createRSVP(data: {
 }
 
 export async function deleteRSVP(id: string): Promise<boolean> {
+  const supabase = getDbClient();
   if (supabase) {
     try {
       const { error } = await supabase.from("rsvps").delete().eq("id", id);

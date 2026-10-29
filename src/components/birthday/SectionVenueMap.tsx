@@ -7,6 +7,19 @@ export function SectionVenueMap() {
       id="venue"
       className="relative w-full py-20 px-4 bg-[#140a04] flex flex-col items-center justify-center text-center overflow-hidden"
     >
+      {/* Background Continuous Video (5-vid.mp4) */}
+      <video
+        src="/5-vid.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      />
+
+      {/* Dark Luxury Overlay for high readability */}
+      <div className="absolute inset-0 bg-[#0d0502]/85 backdrop-blur-[2px] pointer-events-none" />
+
       {/* Background Decorative Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#d4a33c]/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -21,7 +34,7 @@ export function SectionVenueMap() {
         <div className="w-24 h-[2px] bg-gradient-to-r from-transparent via-[#ffd700] to-transparent mb-8" />
 
         {/* Venue Information Card */}
-        <div className="w-full max-w-2xl bg-gradient-to-b from-[#211108] to-[#120702] border-2 border-[#d4a33c]/60 rounded-3xl p-6 sm:p-10 shadow-2xl mb-8 flex flex-col items-center">
+        <div className="w-full max-w-2xl bg-gradient-to-b from-[#211108]/90 to-[#120702]/95 backdrop-blur-md border-2 border-[#d4a33c]/60 rounded-3xl p-6 sm:p-10 shadow-2xl mb-8 flex flex-col items-center">
           <div className="w-14 h-14 rounded-full bg-[#3d200f] border border-[#d4a33c] text-[#ffd700] flex items-center justify-center mb-4 shadow-lg">
             <MapPin className="w-7 h-7 animate-bounce" />
           </div>

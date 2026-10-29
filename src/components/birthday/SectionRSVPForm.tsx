@@ -71,8 +71,21 @@ export function SectionRSVPForm() {
   return (
     <section
       id="rsvp"
-      className="relative w-full py-20 px-4 vintage-wood-sunburst flex flex-col items-center justify-center text-center overflow-hidden"
+      className="relative w-full py-20 px-4 bg-[#140a04] flex flex-col items-center justify-center text-center overflow-hidden"
     >
+      {/* Background Continuous Video (5-vid.mp4) */}
+      <video
+        src="/5-vid.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      />
+
+      {/* Dark Luxury Overlay for high readability */}
+      <div className="absolute inset-0 bg-[#0d0502]/80 backdrop-blur-[2px] pointer-events-none" />
+
       {/* Decorative Gold Stars */}
       <div className="absolute top-10 left-10 pointer-events-none opacity-40">
         <Sparkles className="w-8 h-8 text-[#ffd700] animate-pulse" />

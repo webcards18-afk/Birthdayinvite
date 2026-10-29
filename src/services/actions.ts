@@ -74,7 +74,7 @@ export const adminLogin = createServerFn({ method: "POST" })
       recordFailedAttempt(data.username);
       return {
         success: false,
-        error: "Invalid admin username or password.",
+        error: verification.error || "Invalid admin username or password.",
       };
     }
 
