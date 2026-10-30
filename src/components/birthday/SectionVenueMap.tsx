@@ -1,7 +1,41 @@
+import { useEffect, useRef } from "react";
 import { birthdayData } from "@/config/wedding";
 import { MapPin, Navigation, ExternalLink } from "lucide-react";
 
 export function SectionVenueMap() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Configure continuous background video for iOS Safari
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    vid.defaultMuted = true;
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.setAttribute("playsinline", "true");
+    vid.setAttribute("webkit-playsinline", "true");
+    vid.setAttribute("x5-playsinline", "true");
+
+    const tryPlay = () => {
+      vid.play().catch(() => {});
+    };
+    tryPlay();
+
+    const onInteraction = () => {
+      if (vid && vid.paused) {
+        vid.play().catch(() => {});
+      }
+    };
+    window.addEventListener("touchstart", onInteraction, { once: true, passive: true });
+    window.addEventListener("scroll", onInteraction, { once: true, passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", onInteraction);
+      window.removeEventListener("scroll", onInteraction);
+    };
+  }, []);
+
   return (
     <section
       id="venue"
@@ -9,11 +43,15 @@ export function SectionVenueMap() {
     >
       {/* Background Continuous Video (5-vid.mp4) */}
       <video
+        ref={videoRef}
         src="/5-vid.mp4"
         autoPlay
         loop
         muted
         playsInline
+        webkit-playsinline="true"
+        x5-playsinline="true"
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
 

@@ -1,9 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { submitRSVP } from "@/services/actions";
 import { CheckCircle2, XCircle, HeartHandshake, Loader2, Sparkles } from "lucide-react";
 
 export function SectionRSVPForm() {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [guestName, setGuestName] = useState("");
+
+  // Configure continuous background video for iOS Safari
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    vid.defaultMuted = true;
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.setAttribute("playsinline", "true");
+    vid.setAttribute("webkit-playsinline", "true");
+    vid.setAttribute("x5-playsinline", "true");
+
+    const tryPlay = () => {
+      vid.play().catch(() => {});
+    };
+    tryPlay();
+
+    const onInteraction = () => {
+      if (vid && vid.paused) {
+        vid.play().catch(() => {});
+      }
+    };
+    window.addEventListener("touchstart", onInteraction, { once: true, passive: true });
+    window.addEventListener("scroll", onInteraction, { once: true, passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", onInteraction);
+      window.removeEventListener("scroll", onInteraction);
+    };
+  }, []);
   const [response, setResponse] = useState<"attending" | "declined">("attending");
   const [accompanyingGuests, setAccompanyingGuests] = useState<number>(0);
   const [contactInfo, setContactInfo] = useState("");
@@ -75,11 +107,15 @@ export function SectionRSVPForm() {
     >
       {/* Background Continuous Video (5-vid.mp4) */}
       <video
+        ref={videoRef}
         src="/5-vid.mp4"
         autoPlay
         loop
         muted
         playsInline
+        webkit-playsinline="true"
+        x5-playsinline="true"
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
 

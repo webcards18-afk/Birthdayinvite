@@ -14,36 +14,73 @@ export function SectionAgePoster({ onScratched }: SectionAgePosterProps) {
   const hasPlayedRef = useRef(false);
   const stoppedRef = useRef(false);
 
+  // Configure video for iOS Safari on mount
+  useEffect(() => {
+    if (videoRef.current) {
+      const vid = videoRef.current;
+      vid.defaultMuted = true;
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.setAttribute("playsinline", "true");
+      vid.setAttribute("webkit-playsinline", "true");
+      vid.setAttribute("x5-playsinline", "true");
+    }
+  }, []);
+
   // Play video 2 ONLY once after the card is scratched/revealed
   useEffect(() => {
     if (isRevealed && videoRef.current && !hasPlayedRef.current) {
       hasPlayedRef.current = true;
       const vid = videoRef.current;
-      vid.currentTime = 0;
-      vid.play().catch((err) => {
-        console.warn("Video 2 play error after scratch:", err);
-      });
+      vid.defaultMuted = true;
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.setAttribute("playsinline", "true");
+      vid.setAttribute("webkit-playsinline", "true");
 
-      // High-precision RAF loop to freeze exactly on the final frame
       let rafId: number;
-      const checkEnd = () => {
-        if (vid && !vid.paused && !stoppedRef.current) {
-          const duration = vid.duration;
-          if (duration && !isNaN(duration) && duration > 0.5) {
-            if (vid.currentTime >= duration - 0.06) {
-              stoppedRef.current = true;
-              vid.pause();
-              vid.currentTime = Math.max(0, duration - 0.04);
-              setIsVideoEnded(true);
-              return;
+      const startRafCheck = () => {
+        const checkEnd = () => {
+          if (vid && !vid.paused && !stoppedRef.current) {
+            const duration = vid.duration;
+            if (duration && !isNaN(duration) && duration > 0.5) {
+              if (vid.currentTime >= duration - 0.06) {
+                stoppedRef.current = true;
+                vid.pause();
+                vid.currentTime = Math.max(0, duration - 0.04);
+                setIsVideoEnded(true);
+                return;
+              }
             }
           }
-        }
-        if (!stoppedRef.current) {
-          rafId = requestAnimationFrame(checkEnd);
+          if (!stoppedRef.current) {
+            rafId = requestAnimationFrame(checkEnd);
+          }
+        };
+        rafId = requestAnimationFrame(checkEnd);
+      };
+
+      const tryPlay = () => {
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              startRafCheck();
+            })
+            .catch((err) => {
+              console.warn("Video 2 play pending iOS touch gesture:", err);
+              const onTouchOnce = () => {
+                if (vid && !stoppedRef.current) {
+                  vid.play().then(() => startRafCheck()).catch(() => {});
+                }
+              };
+              window.addEventListener("touchstart", onTouchOnce, { once: true, passive: true });
+              window.addEventListener("touchend", onTouchOnce, { once: true, passive: true });
+            });
         }
       };
-      rafId = requestAnimationFrame(checkEnd);
+
+      tryPlay();
 
       return () => cancelAnimationFrame(rafId);
     }
@@ -80,9 +117,11 @@ export function SectionAgePoster({ onScratched }: SectionAgePosterProps) {
         {/* Background Video 2 — fills container edge to edge */}
         <video
           ref={videoRef}
-          src={`${videoSrc}#t=0.001`}
+          src={videoSrc}
           muted
           playsInline
+          webkit-playsinline="true"
+          x5-playsinline="true"
           preload="auto"
           onEnded={freezeAtEnd}
           className="w-full h-full object-cover block"

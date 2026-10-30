@@ -12,6 +12,14 @@ export function SectionPartyDetails() {
     const vid = videoRef.current;
     if (!vid) return;
 
+    // Explicitly configure for iOS Safari playback
+    vid.defaultMuted = true;
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.setAttribute("playsinline", "true");
+    vid.setAttribute("webkit-playsinline", "true");
+    vid.setAttribute("x5-playsinline", "true");
+
     let rafId: number;
 
     const checkEnd = () => {
@@ -33,27 +41,61 @@ export function SectionPartyDetails() {
       }
     };
 
+    const startPlayback = () => {
+      if (hasPlayedRef.current || stoppedRef.current) return;
+      hasPlayedRef.current = true;
+      vid.defaultMuted = true;
+      vid.muted = true;
+
+      const playPromise = vid.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            rafId = requestAnimationFrame(checkEnd);
+          })
+          .catch((err) => {
+            console.warn("Video 4 autoplay blocked on iOS, waiting for touch/scroll:", err);
+            const onInteraction = () => {
+              if (vid && !stoppedRef.current) {
+                vid.play().then(() => {
+                  rafId = requestAnimationFrame(checkEnd);
+                }).catch(() => {});
+              }
+            };
+            window.addEventListener("touchstart", onInteraction, { once: true, passive: true });
+            window.addEventListener("scroll", onInteraction, { once: true, passive: true });
+          });
+      }
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && !hasPlayedRef.current) {
-          hasPlayedRef.current = true;
-          vid.currentTime = 0;
-          vid
-            .play()
-            .then(() => {
-              rafId = requestAnimationFrame(checkEnd);
-            })
-            .catch(() => {});
+        if (entries[0]?.isIntersecting) {
+          startPlayback();
         }
       },
-      { threshold: 0.25 }
+      { threshold: 0.2 }
     );
 
     observer.observe(vid);
 
+    // Fallback: Check scroll position in case IntersectionObserver is throttled on iOS
+    const handleScrollCheck = () => {
+      if (hasPlayedRef.current || stoppedRef.current) return;
+      const rect = vid.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight * 0.75 && rect.bottom > window.innerHeight * 0.25;
+      if (inView) {
+        startPlayback();
+      }
+    };
+    window.addEventListener("scroll", handleScrollCheck, { passive: true });
+    window.addEventListener("touchstart", handleScrollCheck, { passive: true });
+
     return () => {
       observer.disconnect();
       cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", handleScrollCheck);
+      window.removeEventListener("touchstart", handleScrollCheck);
     };
   }, []);
 
@@ -96,6 +138,8 @@ export function SectionPartyDetails() {
           src={videoSrc}
           muted
           playsInline
+          webkit-playsinline="true"
+          x5-playsinline="true"
           preload="auto"
           onTimeUpdate={handleTimeUpdate}
           onEnded={freezeAtEnd}

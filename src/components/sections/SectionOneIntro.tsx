@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { clips } from "@/config/wedding";
-
-let globalAudio: HTMLAudioElement | null = null;
+import { startBackgroundMusic } from "@/services/audioPlayer";
 
 interface SectionOneIntroProps {
   onOpen?: () => void;
@@ -14,9 +13,19 @@ export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: Secti
   const [isVideoFinished, setIsVideoFinished] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // When page loads or refreshes, force position to top
+  // When page loads or refreshes, force position to top and prepare video for iOS Safari
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+
+    if (videoRef.current) {
+      const vid = videoRef.current;
+      vid.defaultMuted = true;
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.setAttribute("playsinline", "true");
+      vid.setAttribute("webkit-playsinline", "true");
+      vid.setAttribute("x5-playsinline", "true");
+    }
   }, []);
 
   if (!clips.one || isDismissed) return null;
@@ -25,27 +34,47 @@ export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: Secti
     setHasStarted(true);
     onOpen?.();
 
-    if (typeof window !== "undefined") {
-      if (!globalAudio) {
-        globalAudio = new Audio("/music.mpeg");
-        globalAudio.loop = true;
+    // 1. Play background music with iOS Web Audio / Safari unlocking
+    startBackgroundMusic();
+
+    // 2. Play Video 1 reliably on iOS Safari
+    if (videoRef.current) {
+      const vid = videoRef.current;
+      vid.defaultMuted = true;
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.setAttribute("playsinline", "true");
+      vid.setAttribute("webkit-playsinline", "true");
+
+      const playPromise = vid.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Video 1 initial play prevented, retrying:", err);
+          setTimeout(() => {
+            vid.play().catch(() => {});
+          }, 100);
+        });
       }
-      globalAudio.play().catch((err) => {
-        console.warn("Primary audio (/music.mpeg) play failed, trying fallback:", err);
-        const fallbackAudio = new Audio("/music.mp3");
-        fallbackAudio.loop = true;
-        fallbackAudio.play().then(() => {
-          globalAudio = fallbackAudio;
-        }).catch((e) => console.error("Fallback audio play failed:", e));
-      });
     }
 
-    if (videoRef.current) {
-      videoRef.current.muted = true;
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch((err) => {
-        console.error("Video play failed:", err);
+    // 3. Pre-warm / prime all subsequent videos while user gesture is active on iOS
+    try {
+      const allVideos = document.querySelectorAll<HTMLVideoElement>("video");
+      allVideos.forEach((v) => {
+        v.defaultMuted = true;
+        v.muted = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "true");
+        v.setAttribute("webkit-playsinline", "true");
+        v.setAttribute("x5-playsinline", "true");
+        try {
+          v.load();
+        } catch {
+          // Ignore
+        }
       });
+    } catch {
+      // Ignore
     }
   };
 
@@ -66,10 +95,12 @@ export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: Secti
       <div className="relative w-full h-full max-w-[480px] sm:max-w-[540px] flex items-center justify-center overflow-hidden">
         <video
           ref={videoRef}
-          src={`${clips.one.src}#t=0.001`}
+          src={clips.one.src}
           preload="auto"
           muted
           playsInline
+          webkit-playsinline="true"
+          x5-playsinline="true"
           onEnded={handleVideoEnded}
           className="w-full h-full object-cover block"
         />

@@ -51,7 +51,7 @@ export const birthdayData = {
   whatsappNumber: "96896238033",
 
   // Music
-  musicUrl: "/music.mpeg",
+  musicUrl: "/music.mp3",
 };
 
 /** Backward compatibility alias */
