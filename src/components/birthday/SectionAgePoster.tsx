@@ -170,14 +170,14 @@ export function SectionAgePoster({ onScratched }: SectionAgePosterProps) {
           />
         </div>
 
-        {/* Scroll hint shown AFTER scratching the card */}
+        {/* Scroll hint shown AFTER scratching the card — white color at bottom right */}
         {isRevealed && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center text-white/95 animate-bounce z-30 pointer-events-none transition-opacity duration-1000">
-            <span className="text-[11px] uppercase tracking-[0.28em] font-medium text-center drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] text-[#ffd700]">
+          <div className="absolute bottom-6 right-4 sm:right-6 flex flex-col items-center text-white animate-bounce z-30 pointer-events-none transition-opacity duration-1000">
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-semibold text-center drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] text-white">
               Scroll to begin celebration
             </span>
             <svg
-              className="w-5 h-5 text-[#ffd700] mt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+              className="w-5 h-5 text-white mt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

@@ -153,6 +153,21 @@ export function SectionMainInvitation() {
           onEnded={freezeAtEnd}
           className="w-full h-full object-cover block mx-auto"
         />
+
+        {/* Scroll hint — white color at bottom right */}
+        <div className="absolute bottom-6 right-4 sm:right-6 flex flex-col items-center text-white animate-bounce z-30 pointer-events-none transition-opacity duration-1000">
+          <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-semibold text-center drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] text-white">
+            Scroll to begin celebration
+          </span>
+          <svg
+            className="w-5 h-5 text-white mt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
       </div>
     </section>
   );
