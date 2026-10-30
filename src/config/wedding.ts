@@ -95,6 +95,5 @@ export const navSections = [
   { id: "invitation", label: "Invitation" },
   { id: "details", label: "Party Details" },
   { id: "venue", label: "Venue & Map" },
-  { id: "rsvp", label: "RSVP" },
   { id: "contact", label: "Contact" },
 ];

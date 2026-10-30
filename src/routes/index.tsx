@@ -6,7 +6,6 @@ import { SectionMainInvitation } from "@/components/birthday/SectionMainInvitati
 import { SectionCountdownTimer } from "@/components/birthday/SectionCountdownTimer";
 import { SectionPartyDetails } from "@/components/birthday/SectionPartyDetails";
 import { SectionVenueMap } from "@/components/birthday/SectionVenueMap";
-import { SectionRSVPForm } from "@/components/birthday/SectionRSVPForm";
 import { SectionContactButtons } from "@/components/birthday/SectionContactButtons";
 import { birthdayData } from "@/config/wedding";
 
@@ -91,13 +90,10 @@ function Index() {
             {/* Section 4: Venue Map & Navigation Directions */}
             <SectionVenueMap />
 
-            {/* Section 5: Guest RSVP Form */}
-            <SectionRSVPForm />
-
-            {/* Section 6: Contact Buttons (Call & WhatsApp) */}
+            {/* Section 5: Contact Buttons (Call & WhatsApp) */}
             <SectionContactButtons />
 
-            {/* Section 7: Footer */}
+            {/* Section 6: Footer */}
             <footer className="relative w-full py-12 px-4 bg-[#0a0401] border-t border-[#d4a33c]/20 flex flex-col items-center justify-center text-center">
               <p className="font-display text-lg sm:text-xl text-[#fce09b] font-medium tracking-wide mb-1">
                 Honoring 50 Years of Excellence
