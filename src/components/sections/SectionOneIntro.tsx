@@ -13,7 +13,7 @@ export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: Secti
   const [isVideoFinished, setIsVideoFinished] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // When page loads or refreshes, force position to top and prepare video for iOS Safari
+  // When page loads or refreshes, force position to top and prepare video for iOS & Android
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
 
@@ -26,6 +26,18 @@ export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: Secti
       vid.setAttribute("webkit-playsinline", "true");
       vid.setAttribute("x5-playsinline", "true");
     }
+
+    return () => {
+      if (videoRef.current) {
+        try {
+          videoRef.current.pause();
+          videoRef.current.removeAttribute("src");
+          videoRef.current.load();
+        } catch {
+          // ignore
+        }
+      }
+    };
   }, []);
 
   if (!clips.one || isDismissed) return null;
@@ -34,10 +46,10 @@ export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: Secti
     setHasStarted(true);
     onOpen?.();
 
-    // 1. Play background music with iOS Web Audio / Safari unlocking
+    // 1. Play background music (works on iOS Safari & Android)
     startBackgroundMusic();
 
-    // 2. Play Video 1 reliably on iOS Safari
+    // 2. Play Video 1 on user tap
     if (videoRef.current) {
       const vid = videoRef.current;
       vid.defaultMuted = true;
@@ -56,32 +68,26 @@ export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: Secti
         });
       }
     }
-
-    // 3. Pre-warm / prime all subsequent videos while user gesture is active on iOS
-    try {
-      const allVideos = document.querySelectorAll<HTMLVideoElement>("video");
-      allVideos.forEach((v) => {
-        v.defaultMuted = true;
-        v.muted = true;
-        v.playsInline = true;
-        v.setAttribute("playsinline", "true");
-        v.setAttribute("webkit-playsinline", "true");
-        v.setAttribute("x5-playsinline", "true");
-        try {
-          v.load();
-        } catch {
-          // Ignore
-        }
-      });
-    } catch {
-      // Ignore
-    }
   };
 
   const handleVideoEnded = () => {
+    if (isVideoFinished) return;
     setIsVideoFinished(true);
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
     window.dispatchEvent(new Event("firstVideoFinished"));
     onFinish?.();
+  };
+
+  const handleTimeUpdate = () => {
+    const vid = videoRef.current;
+    if (!vid || isVideoFinished) return;
+    if (vid.duration && !isNaN(vid.duration) && vid.duration > 1) {
+      if (vid.currentTime >= vid.duration - 0.1) {
+        handleVideoEnded();
+      }
+    }
   };
 
   return (
@@ -101,6 +107,7 @@ export function SectionOneIntro({ onOpen, onFinish, isDismissed = false }: Secti
           playsInline
           webkit-playsinline="true"
           x5-playsinline="true"
+          onTimeUpdate={handleTimeUpdate}
           onEnded={handleVideoEnded}
           className="w-full h-full object-cover block"
         />

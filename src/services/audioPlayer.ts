@@ -80,3 +80,4 @@ export function stopBackgroundMusic() {
     globalAudio.pause();
   }
 }
+

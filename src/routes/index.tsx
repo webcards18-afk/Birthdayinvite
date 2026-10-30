@@ -76,49 +76,45 @@ function Index() {
         {/* Section 1: Birthday Age Poster with Golden Scratch Card */}
         <SectionAgePoster onScratched={handleCardScratched} />
 
-        {/* All subsequent sections are mounted and revealed once the card is scratched */}
-        <div
-          className={`w-full flex flex-col transition-all duration-1000 ${
-            hasScratched
-              ? "opacity-100 max-h-none pointer-events-auto"
-              : "opacity-0 max-h-0 overflow-hidden pointer-events-none"
-          }`}
-        >
-          {/* Section 2: Main Birthday Invitation (Video 3 — stops 2s before end) */}
-          <SectionMainInvitation />
+        {/* All subsequent sections are mounted and revealed ONLY once the card is scratched */}
+        {hasScratched && (
+          <div className="w-full flex flex-col animate-fade-in">
+            {/* Section 2: Main Birthday Invitation (Video 3 — stops 2s before end) */}
+            <SectionMainInvitation />
 
-          {/* Section 2.5: Countdown Timer */}
-          <SectionCountdownTimer />
+            {/* Section 2.5: Countdown Timer */}
+            <SectionCountdownTimer />
 
-          {/* Section 3: Party Details & Dress Code (Video 4) */}
-          <SectionPartyDetails />
+            {/* Section 3: Party Details & Dress Code (Video 4) */}
+            <SectionPartyDetails />
 
-          {/* Section 4: Venue Map & Navigation Directions */}
-          <SectionVenueMap />
+            {/* Section 4: Venue Map & Navigation Directions */}
+            <SectionVenueMap />
 
-          {/* Section 5: Guest RSVP Form */}
-          <SectionRSVPForm />
+            {/* Section 5: Guest RSVP Form */}
+            <SectionRSVPForm />
 
-          {/* Section 6: Contact Buttons (Call & WhatsApp) */}
-          <SectionContactButtons />
+            {/* Section 6: Contact Buttons (Call & WhatsApp) */}
+            <SectionContactButtons />
 
-          {/* Section 7: Footer */}
-          <footer className="relative w-full py-12 px-4 bg-[#0a0401] border-t border-[#d4a33c]/20 flex flex-col items-center justify-center text-center">
-            <p className="font-display text-lg sm:text-xl text-[#fce09b] font-medium tracking-wide mb-1">
-              Honoring 50 Years of Excellence
-            </p>
-            <p className="font-body text-xs sm:text-sm text-[#e8c07d]/70 tracking-widest uppercase mb-6">
-              {birthdayData.celebrantTitle}
-            </p>
+            {/* Section 7: Footer */}
+            <footer className="relative w-full py-12 px-4 bg-[#0a0401] border-t border-[#d4a33c]/20 flex flex-col items-center justify-center text-center">
+              <p className="font-display text-lg sm:text-xl text-[#fce09b] font-medium tracking-wide mb-1">
+                Honoring 50 Years of Excellence
+              </p>
+              <p className="font-body text-xs sm:text-sm text-[#e8c07d]/70 tracking-widest uppercase mb-6">
+                {birthdayData.celebrantTitle}
+              </p>
 
-            <div className="w-16 h-[1px] bg-[#d4a33c]/30 mb-6" />
+              <div className="w-16 h-[1px] bg-[#d4a33c]/30 mb-6" />
 
-            {/* Creator credit */}
-            <p className="text-xs text-[#e8c07d]/60 font-medium tracking-wider">
-              Created by @prashantharts
-            </p>
-          </footer>
-        </div>
+              {/* Creator credit */}
+              <p className="text-xs text-[#e8c07d]/60 font-medium tracking-wider">
+                Created by @prashantharts
+              </p>
+            </footer>
+          </div>
+        )}
       </main>
     </div>
   );

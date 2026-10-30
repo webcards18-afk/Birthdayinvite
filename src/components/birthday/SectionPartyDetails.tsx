@@ -54,9 +54,11 @@ export function SectionPartyDetails() {
             rafId = requestAnimationFrame(checkEnd);
           })
           .catch((err) => {
-            console.warn("Video 4 autoplay blocked on iOS, waiting for touch/scroll:", err);
+            console.warn("Video 4 autoplay waiting for touch/scroll:", err);
+            hasPlayedRef.current = false; // Allow retry on user interaction!
             const onInteraction = () => {
               if (vid && !stoppedRef.current) {
+                hasPlayedRef.current = true;
                 vid.play().then(() => {
                   rafId = requestAnimationFrame(checkEnd);
                 }).catch(() => {});
@@ -74,17 +76,16 @@ export function SectionPartyDetails() {
           startPlayback();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
 
     observer.observe(vid);
 
-    // Fallback: Check scroll position in case IntersectionObserver is throttled on iOS
+    // Fallback: Check scroll position in case IntersectionObserver is throttled on mobile
     const handleScrollCheck = () => {
       if (hasPlayedRef.current || stoppedRef.current) return;
       const rect = vid.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight * 0.75 && rect.bottom > window.innerHeight * 0.25;
-      if (inView) {
+      if (rect.height > 50 && rect.top < window.innerHeight * 0.85 && rect.bottom > window.innerHeight * 0.15) {
         startPlayback();
       }
     };
@@ -96,6 +97,11 @@ export function SectionPartyDetails() {
       cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", handleScrollCheck);
       window.removeEventListener("touchstart", handleScrollCheck);
+      if (vid) {
+        try {
+          vid.pause();
+        } catch {}
+      }
     };
   }, []);
 

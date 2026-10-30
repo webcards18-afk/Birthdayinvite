@@ -5,7 +5,7 @@ import { MapPin, Navigation, ExternalLink } from "lucide-react";
 export function SectionVenueMap() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Configure continuous background video for iOS Safari
+  // Configure continuous background video for iOS & Android
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -17,22 +17,41 @@ export function SectionVenueMap() {
     vid.setAttribute("webkit-playsinline", "true");
     vid.setAttribute("x5-playsinline", "true");
 
-    const tryPlay = () => {
-      vid.play().catch(() => {});
-    };
-    tryPlay();
+    let isVisible = false;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          isVisible = true;
+          vid.play().catch(() => {});
+        } else {
+          isVisible = false;
+          vid.pause();
+        }
+      },
+      { threshold: 0.05, rootMargin: "100px" }
+    );
+
+    observer.observe(vid);
 
     const onInteraction = () => {
-      if (vid && vid.paused) {
+      if (vid && vid.paused && isVisible) {
         vid.play().catch(() => {});
       }
     };
-    window.addEventListener("touchstart", onInteraction, { once: true, passive: true });
-    window.addEventListener("scroll", onInteraction, { once: true, passive: true });
+    window.addEventListener("touchstart", onInteraction, { passive: true });
+    window.addEventListener("scroll", onInteraction, { passive: true });
 
     return () => {
+      observer.disconnect();
       window.removeEventListener("touchstart", onInteraction);
       window.removeEventListener("scroll", onInteraction);
+      if (vid) {
+        try {
+          vid.pause();
+        } catch {}
+      }
     };
   }, []);
 
@@ -45,7 +64,6 @@ export function SectionVenueMap() {
       <video
         ref={videoRef}
         src="/5-vid.mp4"
-        autoPlay
         loop
         muted
         playsInline

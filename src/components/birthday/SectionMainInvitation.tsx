@@ -12,7 +12,7 @@ export function SectionMainInvitation() {
     const vid = videoRef.current;
     if (!vid) return;
 
-    // Explicitly configure for iOS Safari playback
+    // Explicitly configure for Android & iOS Safari playback
     vid.defaultMuted = true;
     vid.muted = true;
     vid.playsInline = true;
@@ -58,10 +58,11 @@ export function SectionMainInvitation() {
             rafId = requestAnimationFrame(checkStopPoint);
           })
           .catch((err) => {
-            console.warn("Video 3 autoplay blocked on iOS, waiting for touch/scroll:", err);
-            // On iOS Safari, resume on user touch or scroll
+            console.warn("Video 3 autoplay waiting for user interaction:", err);
+            hasPlayedRef.current = false; // Allow retry on scroll or touch!
             const onInteraction = () => {
               if (vid && !stoppedRef.current) {
+                hasPlayedRef.current = true;
                 vid.play().then(() => {
                   rafId = requestAnimationFrame(checkStopPoint);
                 }).catch(() => {});
@@ -79,17 +80,16 @@ export function SectionMainInvitation() {
           startPlayback();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
 
     observer.observe(vid);
 
-    // Fallback: Check scroll position in case IntersectionObserver is throttled on iOS
+    // Fallback: Check scroll position in case IntersectionObserver is throttled on mobile
     const handleScrollCheck = () => {
       if (hasPlayedRef.current || stoppedRef.current) return;
       const rect = vid.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight * 0.75 && rect.bottom > window.innerHeight * 0.25;
-      if (inView) {
+      if (rect.height > 50 && rect.top < window.innerHeight * 0.85 && rect.bottom > window.innerHeight * 0.15) {
         startPlayback();
       }
     };

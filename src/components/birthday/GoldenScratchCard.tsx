@@ -367,7 +367,25 @@ export function GoldenScratchCard({ onRevealed, className = "" }: GoldenScratchC
       if (!isRevealed) initCanvas();
     };
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    let ro: ResizeObserver | null = null;
+    if (containerRef.current && typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => {
+        if (!isRevealed) initCanvas();
+      });
+      ro.observe(containerRef.current);
+    }
+
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(() => {
+        if (!isRevealed) initCanvas();
+      }).catch(() => {});
+    }
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      ro?.disconnect();
+    };
   }, [initCanvas, isRevealed]);
 
   // Scratch drawing logic
@@ -434,7 +452,7 @@ export function GoldenScratchCard({ onRevealed, className = "" }: GoldenScratchC
     setScratchPercent(percent);
 
     // Auto-reveal once scratched past threshold (clears 100% of card)
-    if (percent >= 30 && !isRevealed) {
+    if (percent >= 25 && !isRevealed) {
       setIsRevealed(true);
       onRevealed?.();
     }

@@ -14,7 +14,7 @@ export function SectionAgePoster({ onScratched }: SectionAgePosterProps) {
   const hasPlayedRef = useRef(false);
   const stoppedRef = useRef(false);
 
-  // Configure video for iOS Safari on mount
+  // Configure video for iOS & Android on mount
   useEffect(() => {
     if (videoRef.current) {
       const vid = videoRef.current;
@@ -35,8 +35,6 @@ export function SectionAgePoster({ onScratched }: SectionAgePosterProps) {
       vid.defaultMuted = true;
       vid.muted = true;
       vid.playsInline = true;
-      vid.setAttribute("playsinline", "true");
-      vid.setAttribute("webkit-playsinline", "true");
 
       let rafId: number;
       const startRafCheck = () => {
@@ -68,14 +66,16 @@ export function SectionAgePoster({ onScratched }: SectionAgePosterProps) {
               startRafCheck();
             })
             .catch((err) => {
-              console.warn("Video 2 play pending iOS touch gesture:", err);
+              console.warn("Video 2 play pending mobile gesture:", err);
+              hasPlayedRef.current = false; // Allow retry on user touch!
               const onTouchOnce = () => {
                 if (vid && !stoppedRef.current) {
+                  hasPlayedRef.current = true;
                   vid.play().then(() => startRafCheck()).catch(() => {});
                 }
               };
               window.addEventListener("touchstart", onTouchOnce, { once: true, passive: true });
-              window.addEventListener("touchend", onTouchOnce, { once: true, passive: true });
+              window.addEventListener("click", onTouchOnce, { once: true, passive: true });
             });
         }
       };
@@ -100,9 +100,32 @@ export function SectionAgePoster({ onScratched }: SectionAgePosterProps) {
     }
   };
 
+  const handleTimeUpdate = () => {
+    const vid = videoRef.current;
+    if (!vid || stoppedRef.current) return;
+    if (vid.duration && !isNaN(vid.duration) && vid.duration > 0.5) {
+      if (vid.currentTime >= vid.duration - 0.08) {
+        freezeAtEnd();
+      }
+    }
+  };
+
   const handleReveal = () => {
     setIsRevealed(true);
     onScratched?.();
+
+    // Directly trigger playback while user touch/drag gesture is active
+    const vid = videoRef.current;
+    if (vid && !hasPlayedRef.current) {
+      hasPlayedRef.current = true;
+      vid.defaultMuted = true;
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.play().catch((err) => {
+        console.warn("Video 2 immediate play caught:", err);
+        hasPlayedRef.current = false;
+      });
+    }
   };
 
   if (!videoSrc) return null;
@@ -123,6 +146,7 @@ export function SectionAgePoster({ onScratched }: SectionAgePosterProps) {
           webkit-playsinline="true"
           x5-playsinline="true"
           preload="auto"
+          onTimeUpdate={handleTimeUpdate}
           onEnded={freezeAtEnd}
           className="w-full h-full object-cover block"
         />
